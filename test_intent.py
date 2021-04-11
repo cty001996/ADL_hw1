@@ -10,6 +10,9 @@ from dataset import SeqClsDataset
 from model import SeqClassifier
 from utils import Vocab
 
+from torch.utils.data import DataLoader
+import csv
+
 
 def main(args):
     with open(args.cache_dir / "vocab.pkl", "rb") as f:
@@ -21,9 +24,11 @@ def main(args):
     data = json.loads(args.test_file.read_text())
     dataset = SeqClsDataset(data, vocab, intent2idx, args.max_len)
     # TODO: crecate DataLoader for test dataset
+    dataloader = DataLoader(dataset, batch_size=1, collate_fn=dataset.collate_fn)
 
     embeddings = torch.load(args.cache_dir / "embeddings.pt")
-
+    
+    '''
     model = SeqClassifier(
         embeddings,
         args.hidden_size,
@@ -33,14 +38,39 @@ def main(args):
         dataset.num_classes,
     )
     model.eval()
-
-    ckpt = torch.load(args.ckpt_path)
+'''
+    model = torch.load(args.ckpt_path)
+    model.eval()
     # load weights into model
-
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+        
     # TODO: predict dataset
+    pred_list = []
+    id_list = []
+    with torch.no_grad():
+        for batch in dataloader:
+            encoded = batch["encoded"]
+            id = batch["id"]
+            if torch.cuda.is_available():
+                encoded = encoded.cuda()
+
+            pred = model(encoded)
+            pred_label = torch.argmax(pred, dim=1)
+            pred_list.append(pred_label.squeeze().item())
+            id_list.append(id[0])
+    
+    pred_list = [dataset.idx2label(index) for index in pred_list]
+    # COMPLETE
 
     # TODO: write prediction to file (args.pred_file)
-
+    with open(args.pred_file, "w", newline='') as csvfile:
+        writer = csv.writer(csvfile, delimiter=',')
+        
+        writer.writerow(['id', 'intent'])
+        for i in range(len(id_list)):
+            writer.writerow([id_list[i], pred_list[i]])
+    # COMPLETE
 
 def parse_args() -> Namespace:
     parser = ArgumentParser()
