@@ -52,9 +52,10 @@ def main(args):
         for batch in dataloader:
             encoded = batch["encoded"]
             id = batch["id"]
+            lens = batch["lens"]
             if torch.cuda.is_available():
                 encoded = encoded.cuda()
-            pred = model(encoded)
+            pred = model(encoded, lens)
             pred = pred.permute(1,0,2)
             pred = pred.reshape(-1, pred.shape[-1])
             pred_tag = torch.argmax(pred, dim=1)

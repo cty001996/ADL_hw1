@@ -56,7 +56,7 @@ class SeqSlot(torch.nn.Module):
         self.bidirectional = bidirectional
         self.hidden_size = hidden_size
         self.num_class = num_class
-        self.embed = Embedding.from_pretrained(embeddings, freeze=False)
+        self.embed = Embedding.from_pretrained(embeddings, freeze=True)
         # TODO: model architecture
         self.gru = torch.nn.GRU(len(embeddings[0]), hidden_size, num_layers,
                                 bidirectional=bidirectional, dropout=dropout)
@@ -76,10 +76,10 @@ class SeqSlot(torch.nn.Module):
 
     def forward(self, batch, lens) -> Dict[str, torch.Tensor]: # -> ????
         # TODO: implement model forward
-        embeded = self.embed(batch)
-        #pack = pack_padded_sequence(embeded, lens)
-        output, _ = self.gru(embeded)
-        #output, _ = pad_packed_sequence(output)
+        embeded = self.embed(batch.t())
+        pack = pack_padded_sequence(embeded, lens)
+        output, _ = self.gru(pack)
+        output, _ = pad_packed_sequence(output) 
         output = self.linear(output)
         return output
         # COMPLETE

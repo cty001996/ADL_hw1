@@ -100,8 +100,6 @@ def main(args):
                 
                 size += len(encoded) * tag.shape[0]
                 count += len(encoded)
-                print(pred_tag)
-                print(tag)
                 correct += (pred_tag == tag).type(torch.float).sum()
                 join_correct += sum([int(torch.equal(a, b)) for a,b in zip(pred_tag.t(), tag.t())])
                 #classification_report(tag.tolist(), pred_tag.view(len(tag), -1).tolist(), mode='strict', scheme=IOB2)

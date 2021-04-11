@@ -86,7 +86,7 @@ class SeqSlotDataset(Dataset):
         tokens_batch = [sample["tokens"] for sample in samples]
         lens = [len(sample["tokens"]) for sample in samples]
         encoded_batch = self.vocab.encode_batch(tokens_batch)
-        encoded_batch = torch.LongTensor(encoded_batch).t()
+        encoded_batch = torch.LongTensor(encoded_batch)
         if samples[0].get("tags") != None:
             pad_len = lens[0]
             tag_batch = []
