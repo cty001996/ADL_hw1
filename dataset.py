@@ -86,13 +86,17 @@ class SeqSlotDataset(Dataset):
         encoded_batch = self.vocab.encode_batch(tokens_batch)
         encoded_batch = torch.LongTensor(encoded_batch)
         if samples[0].get("tags") != None:
-            tags_batch = [self.tag2idx(tag) for tag in sample["tags"] for sample in samples]
-            tags_batch = torch.LongTensor(label_batch)
+            pad_len = len(encoded_batch[0])
+            tag_batch = []
+            for sample in samples:
+                tag_batch.append ([self.tag2idx(tag) for tag in sample["tags"]]
+                        + [self.tag2idx("O")] * (pad_len - len(sample["tags"])))
+            tag_batch = torch.LongTensor(tag_batch).t()
         else:
             tag_batch = None
         id_batch = [sample["id"] for sample in samples]
         return {"encoded": encoded_batch,
-                "label": tag_batch,
+                "tag": tag_batch,
                 "id": id_batch,
                 }
         # COMPLETE

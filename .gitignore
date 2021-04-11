@@ -3,4 +3,4 @@ ckpt/
 data/
 glove.840B.300d.txt
 glove.840B.300d.zip
-output.csv
+*.csv
