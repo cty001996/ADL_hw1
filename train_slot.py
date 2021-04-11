@@ -42,6 +42,7 @@ def main(args):
     # COMPLETE
 
     embeddings = torch.load(args.cache_dir / "embeddings.pt")
+
     # TODO: init model and move model to target device(cpu / gpu)
     model = SeqSlot(embeddings, args.hidden_size, args.num_layers, args.dropout,
                     args.bidirectional, datasets[TRAIN].num_classes)
@@ -62,10 +63,11 @@ def main(args):
         for batch_num, batch in enumerate(dataloaders[TRAIN]):
             encoded = batch["encoded"]
             tag = batch["tag"]
+            lens = batch["lens"]
             if torch.cuda.is_available():
                 encoded = encoded.cuda()
                 tag = tag.cuda()
-            pred = model(encoded)
+            pred = model(encoded, lens)
             pred = pred.view(-1, pred.shape[-1])
             tag = tag.reshape(-1)
             loss = loss_fn(pred, tag)
@@ -84,11 +86,11 @@ def main(args):
             for batch_num, batch in enumerate(dataloaders[DEV]):
                 encoded = batch["encoded"]
                 tag = batch["tag"]
-
+                lens = batch["lens"]
                 if torch.cuda.is_available():
                     encoded = encoded.cuda()
                     tag = tag.cuda()
-                pred = model(encoded)
+                pred = model(encoded, lens)
                 pred = pred.view(-1, pred.shape[-1])
                 tag = tag.reshape(-1)
                 loss += loss_fn(pred, tag)
@@ -98,6 +100,8 @@ def main(args):
                 
                 size += len(encoded) * tag.shape[0]
                 count += len(encoded)
+                print(pred_tag)
+                print(tag)
                 correct += (pred_tag == tag).type(torch.float).sum()
                 join_correct += sum([int(torch.equal(a, b)) for a,b in zip(pred_tag.t(), tag.t())])
                 #classification_report(tag.tolist(), pred_tag.view(len(tag), -1).tolist(), mode='strict', scheme=IOB2)

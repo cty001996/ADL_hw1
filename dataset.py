@@ -32,7 +32,7 @@ class SeqClsDataset(Dataset):
         return len(self.label_mapping)
 
     def collate_fn(self, samples: List[Dict]) -> Dict: # -> ???
-        # TODO: implement collate_fn 
+        # TODO: implement collate_fn
         text_batch = [sample["text"].split() for sample in samples]
         encoded_batch = self.vocab.encode_batch(text_batch)
         encoded_batch = torch.LongTensor(encoded_batch)
@@ -82,11 +82,13 @@ class SeqSlotDataset(Dataset):
 
     def collate_fn(self, samples: List[Dict]) -> Dict: # -> ???
         # TODO: implement collate_fn 
+        samples = sorted(samples, key = lambda sample: len(sample["tokens"]), reverse=True)
         tokens_batch = [sample["tokens"] for sample in samples]
+        lens = [len(sample["tokens"]) for sample in samples]
         encoded_batch = self.vocab.encode_batch(tokens_batch)
-        encoded_batch = torch.LongTensor(encoded_batch)
+        encoded_batch = torch.LongTensor(encoded_batch).t()
         if samples[0].get("tags") != None:
-            pad_len = len(encoded_batch[0])
+            pad_len = lens[0]
             tag_batch = []
             for sample in samples:
                 tag_batch.append ([self.tag2idx(tag) for tag in sample["tags"]]
@@ -98,6 +100,7 @@ class SeqSlotDataset(Dataset):
         return {"encoded": encoded_batch,
                 "tag": tag_batch,
                 "id": id_batch,
+                "lens": lens,
                 }
         # COMPLETE
 

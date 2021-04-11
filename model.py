@@ -3,6 +3,7 @@ from typing import Dict
 import torch
 from torch.nn import Embedding
 
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 class SeqClassifier(torch.nn.Module):
     def __init__(
@@ -57,7 +58,7 @@ class SeqSlot(torch.nn.Module):
         self.num_class = num_class
         self.embed = Embedding.from_pretrained(embeddings, freeze=False)
         # TODO: model architecture
-        self.lstm = torch.nn.LSTM(len(embeddings[0]), hidden_size, num_layers,
+        self.gru = torch.nn.GRU(len(embeddings[0]), hidden_size, num_layers,
                                 bidirectional=bidirectional, dropout=dropout)
         
         self.linear = torch.nn.Linear(self.encoder_output_size, num_class)
@@ -73,10 +74,12 @@ class SeqSlot(torch.nn.Module):
             return self.hidden_size
         # COMPLETE
 
-    def forward(self, batch) -> Dict[str, torch.Tensor]: # -> ????
+    def forward(self, batch, lens) -> Dict[str, torch.Tensor]: # -> ????
         # TODO: implement model forward
-        batch_trans = self.embed(batch.t())
-        output, _ = self.lstm(batch_trans)
+        embeded = self.embed(batch)
+        #pack = pack_padded_sequence(embeded, lens)
+        output, _ = self.gru(embeded)
+        #output, _ = pad_packed_sequence(output)
         output = self.linear(output)
         return output
         # COMPLETE
