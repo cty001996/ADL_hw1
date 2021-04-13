@@ -80,7 +80,9 @@ def main(args):
                 print(f"loss: {loss:>7f} [{current:>5d}/{size:>5d}]")
         # COMPLETE
         # TODO: Evaluation loop - calculate accuracy and save model weights
-        loss, correct, size, join_correct, count = 0, 0, 0, 0, 0
+        loss, size = 0, 0
+        y_true = []
+        y_pred = []
         model.eval()
         with torch.no_grad():
             for batch_num, batch in enumerate(dataloaders[DEV]):
@@ -98,15 +100,35 @@ def main(args):
                 pred_tag = pred_tag.view(-1, len(encoded))
                 tag = tag.view(-1, len(encoded))
                 
-                size += len(encoded) * tag.shape[0]
-                count += len(encoded)
-                correct += (pred_tag == tag).type(torch.float).sum()
-                join_correct += sum([int(torch.equal(a, b)) for a,b in zip(pred_tag.t(), tag.t())])
-                #classification_report(tag.tolist(), pred_tag.view(len(tag), -1).tolist(), mode='strict', scheme=IOB2)
+                size += len(encoded)
+                tran_pred = pred_tag.t()
+                tran_true = tag.t()
+                tran_pred = [list(map(datasets[DEV].idx2tag, (tran_pred[i][:lens[i]]).tolist()))
+                        for i in range(len(tran_pred))]
+                tran_true = [list(map(datasets[DEV].idx2tag, (tran_true[i][:lens[i]]).tolist()))
+                        for i in range(len(tran_true))]
+                for i in range(len(tran_pred)):
+                    y_pred.append(tran_pred[i])
+                    y_true.append(tran_true[i])
 
+        report = classification_report(y_pred, y_true, mode='strict', scheme=IOB2)
+        print(report)
+        join_correct = correct = 0
+        join_count = count = 0
+        for i in range(len(y_pred)):
+            join = True
+            for j in range(len(y_pred[i])):
+                count += 1
+                if y_pred[i][j] == y_true[i][j]:
+                    correct += 1
+                else:
+                    join = False
+            join_count += 1
+            if join:
+                join_correct += 1
+        accuracy = correct / count
+        join_ac = join_correct / join_count
         loss /= size
-        accuracy = correct / size
-        join_ac = join_correct / count
         print(f"Dev Error: \n Accuracy: {(100*accuracy):>0.1f}%, Avg loss: {loss:>8f} JoinAC: {(100*join_ac):>0.1f}% \n")
     torch.save(model, args.ckpt_dir / "best.pt")
     # COMPLETE
