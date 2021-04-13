@@ -1,4 +1,4 @@
-# Sample Code for Homework 1 ADL NTU 109 Spring
+# Code for Homework 1 ADL NTU 109 Spring
 
 ## Environment
 ```shell
@@ -8,13 +8,34 @@ make
 pip install -r requirements.txt
 ```
 
-## Preprocessing
+## Preprocessing for train and test
 ```shell
 # To preprocess intent detectiona and slot tagging datasets
 bash preprocess.sh
 ```
 
-## Intent detection
+## Intent detection training
 ```shell
 python train_intent.py
+```
+
+## Slot tag training
+```shell
+python train_slot.py
+```
+
+
+## download model for test
+```shell
+bash download.sh
+```
+
+## Intent detection testing
+```shell
+bash intent_cls.sh
+```
+
+## Slot tag testing
+```shell
+bash slot_tag.sh
 ```
